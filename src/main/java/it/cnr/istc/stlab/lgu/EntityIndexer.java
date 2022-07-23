@@ -36,7 +36,7 @@ import java.util.zip.GZIPInputStream;
 public class EntityIndexer {
 
     private static final Logger log = LogManager.getLogger(EntityIndexer.class);
-    private final String laundromatFolder;
+    private final String laundromatFolder, processedFile;
     private final AtomicLong processedFiles = new AtomicLong(0);
     private final RocksDB outDB;
     private final Set<CharSequence> processing;
@@ -44,12 +44,13 @@ public class EntityIndexer {
     private final FileOutputStream fosErrors;
     private final RDFParserBuilder b = RDFParser.create().lang(Lang.NQUADS);
 
-    public EntityIndexer(RocksDB outDB, String laundromatFolder) throws RocksDBException, FileNotFoundException {
+    public EntityIndexer(RocksDB outDB, String laundromatFolder, String processedFile) throws RocksDBException, FileNotFoundException {
         super();
 
         this.outDB = outDB;
         this.laundromatFolder = laundromatFolder;
         this.processing = new ConcurrentSkipListSet<>();
+        this.processedFile = processedFile;
 
         this.fosProcessed = new FileOutputStream("processed_" + System.currentTimeMillis() + ".txt");
         this.fosErrors = new FileOutputStream("errors" + System.currentTimeMillis() + ".txt");
@@ -95,16 +96,21 @@ public class EntityIndexer {
     }
 
     private void collectTriple(Triple q, ImmutableSet<String> esgEntities, Set<CharSequence> entities) {
-        if (q.getSubject().isURI() && esgEntities.contains(q.getSubject().getURI())) {
-            entities.add(q.getSubject().getURI());
-        }
+        try {
+            if (q.getSubject().isURI() && esgEntities.contains(q.getSubject().getURI())) {
+                entities.add(q.getSubject().getURI());
+            }
 
-        if (q.getPredicate().isURI() && esgEntities.contains(q.getPredicate().getURI())) {
-            entities.add(q.getPredicate().getURI());
-        }
+            if (q.getPredicate().isURI() && esgEntities.contains(q.getPredicate().getURI())) {
+                entities.add(q.getPredicate().getURI());
+            }
 
-        if (q.getObject().isURI() && esgEntities.contains(q.getObject().getURI())) {
-            entities.add(q.getObject().getURI());
+            if (q.getObject().isURI() && esgEntities.contains(q.getObject().getURI())) {
+                entities.add(q.getObject().getURI());
+            }
+
+        } catch (Exception e) {
+            log.error("Error " + e.getMessage());
         }
     }
 
@@ -125,7 +131,7 @@ public class EntityIndexer {
         @Override
         public void accept(Path t) {
             try {
-                File processed = new File(t.getParent().toFile().getAbsolutePath() + "/processed11");
+                File processed = new File(t.getParent().toFile().getAbsolutePath() + "/" + processedFile);
                 log.info("Processing " + t.getFileName().toString() + " " + t.getParent().getFileName().toString() + " " + processed.getName() + " " + processedFiles.get());
                 if (processed.exists()) {
                     log.info("Skipping " + t.getFileName().toString() + " " + t.getParent().getFileName().toString());
@@ -214,7 +220,7 @@ public class EntityIndexer {
 
                 processing.remove(t.getParent().getFileName().toString());
                 processedFiles.incrementAndGet();
-                fosProcessed.write(t.toFile().getAbsolutePath().getBytes());
+                fosProcessed.write(t.getParent().getFileName().toString().getBytes());
                 fosProcessed.write((" " + nOfTriples.get()).getBytes());
                 fosProcessed.write('\n');
 

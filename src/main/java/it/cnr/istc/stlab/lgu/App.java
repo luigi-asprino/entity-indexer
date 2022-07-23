@@ -21,7 +21,7 @@ public class App {
 
 			RocksDB db = Utils.openLabelMapDB(config.getString("dataset_to_entity_db_path"), 10);
 
-			EntityIndexer ei = new EntityIndexer(db, config.getString("laundromat_folder"));
+			EntityIndexer ei = new EntityIndexer(db, config.getString("laundromat_folder"), args[0]);
 			ei.build();
 
 		} catch (ConfigurationException e) {

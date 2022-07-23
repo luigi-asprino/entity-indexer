@@ -134,7 +134,7 @@
 								<execution>
 									<id>entity.indexer</id>
 									<configuration>
-										<outputFile>target/entity.indexer-${project.version}.jar</outputFile>
+										<outputFile>target/entity.indexer-run-${project.version}.jar</outputFile>
 										<shadedArtifactAttached>false</shadedArtifactAttached>
 										<transformers>
 											<transformer implementation="org.apache.maven.plugins.shade.resource.ManifestResourceTransformer">
@@ -186,7 +186,7 @@
 				<groupId>org.apache.jena</groupId>
 				<artifactId>apache-jena-libs</artifactId>
 				<type>pom</type>
-				<version>3.16.0</version>
+				<version>3.13.1</version>
 
 				<exclusions>
 					<exclusion>
